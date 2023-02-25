@@ -10,6 +10,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.math.BigDecimal;
+
 @Service
 @RequiredArgsConstructor
 @Slf4j
@@ -21,20 +23,20 @@ public class TransferServiceImpl implements TransferService {
     @Transactional
     public void transferMoney(TransferMoneyDto dto) {
 
-        Account sendersAccount =
+        Account senderAccount =
                 accountRepository.findById(dto.getIdFrom()).orElseThrow(AccountNotFoundException::new);
-        log.info("Sender's balance before transfer money {}", sendersAccount.getBalance());
+        log.info("Sender's balance before transfer money {}", senderAccount.getBalance());
 
-        Account receiversAccount =
+        Account receiverAccount =
                 accountRepository.findById(dto.getIdTo()).orElseThrow(AccountNotFoundException::new);
-        log.info("Receiver's balance before transfer money {}", receiversAccount.getBalance());
+        log.info("Receiver's balance before transfer money {}", receiverAccount.getBalance());
 
-        sendersAccount.setBalance(sendersAccount.getBalance().subtract(dto.getMoney()));
-        accountRepository.save(sendersAccount);
-        log.info("Sender's balance after transfer money {}", sendersAccount.getBalance());
+        BigDecimal senderBalanceAfterSubtract = senderAccount.getBalance().subtract(dto.getMoney());
+        accountRepository.updateAccountBalance(senderBalanceAfterSubtract, senderAccount.getId());
+        log.info("Sender's balance after transfer money {}", senderBalanceAfterSubtract);
 
-        receiversAccount.setBalance(receiversAccount.getBalance().add(dto.getMoney()));
-        accountRepository.save(receiversAccount);
-        log.info("Receiver's balance after transfer money {}", receiversAccount.getBalance());
+        BigDecimal receiverBalanceAfterAdd = receiverAccount.getBalance().add(dto.getMoney());
+        accountRepository.updateAccountBalance(receiverBalanceAfterAdd, receiverAccount.getId());
+        log.info("Receiver's balance after transfer money {}", receiverBalanceAfterAdd);
     }
 }
